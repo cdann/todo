@@ -10,16 +10,17 @@ import UIKit
 
 class ListTableViewController: UITableViewController {
     
-    var viewModel: ListTableViewModel = ListTableViewModel()
+    var viewModel = ListTableViewModel()
     var editingTask: Task? = nil
     
     override func viewDidLoad() {
         super.viewDidLoad()
         definesPresentationContext = true
         self.tableView.separatorStyle = UITableViewCell.SeparatorStyle.none
-        self.viewModel = ListTableViewModel(lists: List.sampleList(), onSectionsChange: {
+        self.viewModel = ListTableViewModel(onSectionsChange: {
             [unowned self] in
-            self.tableView.reloadData() })
+            self.tableView.reloadData()
+        })
         self.tableView.sectionHeaderHeight = 50
         tableView.reloadData()
     }
@@ -34,7 +35,6 @@ class ListTableViewController: UITableViewController {
         return self.viewModel.numberOfRows(section: section)
     }
 
-    
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "todoCell", for: indexPath) as! ToDoTableViewCell
         cell.task = self.viewModel.getRowTask(section: indexPath.section, row: indexPath.row)
@@ -72,20 +72,9 @@ class ListTableViewController: UITableViewController {
     
     @IBAction func unwindValidateEdit(sender: UIStoryboardSegue) {
         let source = sender.source as! EditViewController
-        guard let taskName = source.nameField.text else {
-            return
-        }
-        var list : List
-        if source.newListSwitch.isOn {
-            list = viewModel.createList(listTitle: source.newListField.text ?? "new list")
-        } else {
-            list = source.lists[source.listPicker.selectedRow(inComponent: 0)]
-        }
-        if let editTask = self.editingTask {
-            editTask.title = taskName
-        }
-        let task = self.editingTask ?? Task(title: taskName, done: false, listUuid: list.uuid)
-        viewModel.putTaskInList(list: list, task: task)
+        guard let taskName = source.nameField.text else { return }
+        let list = source.newListSwitch.isOn ? nil : source.lists[source.listPicker.selectedRow(inComponent: 0)]
+        viewModel.editTaskInList(editTask: self.editingTask, editList: list, taskName: taskName, newListTitle: source.newListField.text)
         self.editingTask = nil
     }
 

@@ -6,50 +6,45 @@
 //  Copyright © 2019 celine dann. All rights reserved.
 //
 
-import Foundation
+import UIKit
 
 typealias Settings = (displayDone:Bool, displayByList:Bool)
 typealias Section = (title: String?, tasks: [Task])
 
 class ListTableViewModel {
-    var lists: [String : List]
+    var lists: [List]
     var settings: Settings = (displayDone: true, displayByList: true)
-    private var onSectionsChange: (() -> ())?
     var sections: [Section] = []
+    private var onSectionsChange: (() -> ())?
+    private let appDelegate: AppDelegate = UIApplication.shared.delegate as! AppDelegate
     
-    init(lists: [List], onSectionsChange: (() -> ())?) {
-        self.lists = lists.reduce([:], { (indexedLists, list) -> [String : List] in
-            var newList = indexedLists
-            newList[list.uuid] = list
-            return newList
-        })
+    init(onSectionsChange: @escaping (() -> ())) {
+        let context = appDelegate.persistentContainer.viewContext
+        let requestedLists : [List]? = try? context.fetch(List.fetchRequest())
+        lists =  requestedLists ?? []
         self.onSectionsChange = onSectionsChange
         updateSections()
     }
-    
+
     init() {
-        self.lists = [:]
+        self.lists = []
     }
     
     // MARK: private functions
     
     private func updateSections() {
-        let listsArray = Array(lists.values)
         if (self.settings.displayByList) {
-            self.sections = listsArray.map({ (list:List) -> Section in
-                let tasks = sortOrHideDoneTasks(tasks: Array(list.tasks.values))
+            self.sections = lists.map({ list -> Section in
+                let tasks = sortOrHideDoneTasks(tasks: list.tasks?.allObjects as! [Task])
                 return (title: list.title, tasks: tasks)
             })
-            
-        }
-        else {
-            let tasks = listsArray.reduce([], {
-                (tasks:[Task], item:List) -> [Task] in
+        } else {
+            let tasks = lists.reduce([]) { tasks, list -> [Task] in
                 var allTasks = tasks
-                allTasks.append(contentsOf: Array(item.tasks.values))
+                allTasks.append(contentsOf: list.tasks?.allObjects as! [Task])
                 return allTasks
-            })
-            self.sections = [(title:"Ma liste", tasks: sortOrHideDoneTasks(tasks: tasks))]
+            }
+            self.sections = [(title:"Main List", tasks: tasks)]
         }
         self.onSectionsChange?()
     }
@@ -73,26 +68,38 @@ class ListTableViewModel {
     }
     
     func getAllLists() -> [List] {
-        return Array(self.lists.values)
+        return lists
     }
     
     // MARK: create or change list
     
-    func createList(listTitle : String, newTask title : String? = nil) -> List {
-        let newList = List(title: listTitle, tasksTitle: title == nil ? [] : [title!])
-        lists[newList.uuid] = newList
-        updateSections()
+    private func createList(listTitle : String) -> List {
+        let context = appDelegate.persistentContainer.viewContext
+        let newList = List(context: context)
+        newList.title = listTitle
+        lists.append(newList)
+        appDelegate.saveContext()
         return newList
     }
     
-    func putTaskInList(list : List, task : Task) {
-        if task.listUuid != list.uuid, let formerList = self.lists[task.listUuid] {
-            formerList.tasks.removeValue(forKey: task.uuid)
+    private func putTaskInList(list : List, task : Task) {
+        if let formerList = task.list, formerList !== list {
+            formerList.removeFromTasks(task)
         }
-        list.tasks[task.uuid] = task
-        task.listUuid = list.uuid
+        if task.list == nil {
+            list.addToTasks(task)
+        }
+        appDelegate.saveContext()
+    }
+    
+    func editTaskInList(editTask: Task?, editList: List?, taskName: String, newListTitle: String?) {
+        let task = editTask ?? Task(context: appDelegate.persistentContainer.viewContext)
+        task.title = taskName
+        let list = editList ?? self.createList(listTitle: newListTitle ?? "")
+        putTaskInList(list: list, task: task)
+        appDelegate.saveContext()
         updateSections()
-        print(task.listUuid)
+        onSectionsChange?()
     }
     
     // MARK: settings and sections
