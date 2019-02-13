@@ -9,33 +9,42 @@
 import Foundation
 
 class List {
-    var title: String
-    var tasks: [Task]
-    let uuid: String
+    var title: String?
+    var tasks: [String : Task]
+    let uuid: String = UUID().uuidString
     
-    init(title:String, tasks:[Task] = []) {
+    init(title:String?) {
         self.title = title
-        self.tasks = tasks
-        self.uuid = UUID().uuidString
+        self.tasks = [:]
     }
     
-    func switchTaskComplete(index: Int) {
-        self.tasks[index].done = !self.tasks[index].done
+    init(title:String?, tasksTitle: [String] = []) {
+        self.title = title
+        let uuid = self.uuid
+        self.tasks = tasksTitle.reduce([:], { (prevTasks, title) -> [String : Task] in
+            var tasks = prevTasks
+            let task = Task(title: title, listUuid: uuid)
+            tasks[task.uuid] = task
+            return tasks
+        })
+        
     }
     
-    func getUndone() -> [Task]{
-        return tasks.filter { return !$0.done}
+    init(title:String?, tasks: [Task] = []) {
+        self.title = title
+        self.tasks = tasks.reduce([:], { (prevTasks, task) -> [String : Task] in
+            var tasks = prevTasks
+            tasks[task.uuid] = task
+            return tasks
+        })
+        
     }
     
-    func getDone() -> [Task] {
-        return tasks.filter { return $0.done}
-    }
-    
-    func sortByDone() {
-        self.tasks.sort { (task1, task2) -> Bool in
-            print("\(task1.title) \(task2.title) \(!task1.done || task2.done)")
-            return !task1.done && task2.done
+    func switchTaskComplete(uuid: String) {
+        guard let task = self.tasks[uuid] else {
+            return
         }
+        task.done = !task.done
     }
     
 
@@ -44,8 +53,8 @@ class List {
     
     static func sampleList() -> [List]{
         return ([
-            List(title: "list1", tasks:[Task(title:"task1.1"), Task(title:"task1.2", done:true)]),
-            List(title: "list2", tasks:[Task(title:"task2.1"), Task(title:"task2.2")]),
+            List(title: "list1", tasksTitle:["task1.1", "task1.2"]),
+            List(title: "list2", tasksTitle:["task2.1", "task2.2"]),
             ])
     }
     

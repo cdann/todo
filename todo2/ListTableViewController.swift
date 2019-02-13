@@ -9,64 +9,64 @@
 import UIKit
 
 class ListTableViewController: UITableViewController {
-    //var uncompleteTasks:[Task]
-    var settings:(displayDone:Bool, displayByList:Bool) = (displayDone: true, displayByList: true)
+    
+    var viewModel: ListTableViewModel = ListTableViewModel()
+    var editingTask: Task? = nil
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        definesPresentationContext = true
         self.tableView.separatorStyle = UITableViewCell.SeparatorStyle.none
-        List.lists = List.sampleList()
+        self.viewModel = ListTableViewModel(lists: List.sampleList(), onSectionsChange: {
+            [unowned self] in
+            self.tableView.reloadData() })
         self.tableView.sectionHeaderHeight = 50
-        self.reloadData()
-    }
-    
-    func reloadData() {
-        List.lists.forEach { (list) in
-            list.sortByDone()
-        }
         tableView.reloadData()
     }
 
     // MARK: - Table view data source
 
     override func numberOfSections(in tableView: UITableView) -> Int {
-        return List.lists.count
+        return self.viewModel.numberOfSections()
     }
 
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return self.settings.displayDone ? List.lists[section].tasks.count : List.lists[section].getUndone().count
+        return self.viewModel.numberOfRows(section: section)
     }
 
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let list =  List.lists[indexPath.section]
         let cell = tableView.dequeueReusableCell(withIdentifier: "todoCell", for: indexPath) as! ToDoTableViewCell
-        let tasks = self.settings.displayDone ? list.tasks : list.getUndone()
-        cell.task = tasks[indexPath.row]
-        cell.onSwitchDone = self.reloadData
+        cell.task = self.viewModel.getRowTask(section: indexPath.section, row: indexPath.row)
+        cell.onSwitchDone = viewModel.sortOrHideDoneInSections
+        cell.onTaskEdit = {
+            [weak self] in
+            self?.editingTask = cell.task
+            self?.performSegue(withIdentifier: "editTaskSegue", sender: nil)
+        }
         return cell
     }
+    
     
     override func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
         let view = UIView()
         let label = UILabel()
         label.translatesAutoresizingMaskIntoConstraints = false
-        //let horizontalConstraint = NSLayoutConstraint(item: newView, attribute: NSLayoutConstraint.Attribute.centerX, relatedBy: NSLayoutConstraint.Relation.equal, toItem: view, attribute: NSLayoutConstraint.Attribute.centerX, multiplier: 1, constant: 0)
         view.addSubview(label)
-        var constraints:[NSLayoutConstraint] = []
-        constraints.append(NSLayoutConstraint(item: label, attribute: .top, relatedBy: .equal, toItem: view, attribute: .top, multiplier: 1, constant: 15))
-        constraints.append(NSLayoutConstraint(item: label, attribute: .bottom, relatedBy: .equal, toItem: view, attribute: .bottom, multiplier: 1, constant: 10))
-        constraints.append(NSLayoutConstraint(item: label, attribute: .leading, relatedBy: .equal, toItem: view, attribute: .leading, multiplier: 1, constant: 15))
-        constraints.append(NSLayoutConstraint(item: label, attribute: .trailing, relatedBy: .equal, toItem: view, attribute: .trailing, multiplier: 1, constant: -15))
-        // constraints.append(NSLayoutConstraint(item: view, attribute: .height, relatedBy: .equal, toItem: nil, attribute: .notAnAttribute, multiplier: 0, constant: 90))
-        
+        let createConstraint:(NSLayoutConstraint.Attribute, CGFloat) -> (NSLayoutConstraint) = {
+            attribute, constant in
+            return NSLayoutConstraint(item: label, attribute: attribute, relatedBy: .equal, toItem: view, attribute: attribute, multiplier: 1, constant: constant)
+        }
+        let constraints:[NSLayoutConstraint] = [
+            createConstraint(.top, 15),
+            createConstraint(.bottom, 15),
+            createConstraint(.leading, 15),
+            createConstraint(.trailing, -15),
+        ]
         view.addConstraints(constraints)
-        
-        label.text = List.lists[section].title
-        //label.textAlignment = NSTextAlignment.center
+        label.text = viewModel.getSectionTitle(section: section)
         label.textColor = UIColor(named: "sectionTitleColor")
         label.font = label.font.withSize(20)
-        
         return view
     }
     
@@ -75,12 +75,18 @@ class ListTableViewController: UITableViewController {
         guard let taskName = source.nameField.text else {
             return
         }
-        let list = source.newListSwitch.isOn ? List(title: source.newListField.text ?? "") : List.lists[source.listPicker.selectedRow(inComponent: 0)]
-        list.tasks.append(Task(title: taskName))
+        var list : List
         if source.newListSwitch.isOn {
-            List.lists.append(list)
+            list = viewModel.createList(listTitle: source.newListField.text ?? "new list")
+        } else {
+            list = source.lists[source.listPicker.selectedRow(inComponent: 0)]
         }
-        self.reloadData()
+        if let editTask = self.editingTask {
+            editTask.title = taskName
+        }
+        let task = self.editingTask ?? Task(title: taskName, done: false, listUuid: list.uuid)
+        viewModel.putTaskInList(list: list, task: task)
+        self.editingTask = nil
     }
 
     @IBAction func unwindCancel(sender: UIStoryboardSegue) {
@@ -88,9 +94,21 @@ class ListTableViewController: UITableViewController {
     }
     
     @IBAction func unwindSettings(sender: UIStoryboardSegue) {
-        let source = sender.source as! SettingsViewController
-        self.settings.displayDone = source.displayDoneSwitch.isOn
-        tableView.reloadData()
+        if let source = sender.source as? SettingsViewController {
+            let settings = (displayDone: source.displayDoneSwitch.isOn, displayByList:source.displayByListSwitch.isOn)
+            viewModel.changeSettings(settings: settings)
+        }
         return
     }
+    
+    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
+        if let editCtrl = segue.destination as? EditViewController {
+            editCtrl.lists = viewModel.getAllLists()
+            editCtrl.editingTask = self.editingTask
+        }
+        if let settingCtrl = segue.destination as? SettingsViewController {
+            settingCtrl.displaySettings = viewModel.settings
+        }
+    }
+    
 }

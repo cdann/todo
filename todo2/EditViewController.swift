@@ -13,15 +13,25 @@ class EditViewController: UIViewController, UIPickerViewDataSource, UIPickerView
     @IBOutlet weak var newListSwitch: UISwitch!
     @IBOutlet weak var newListField: UITextField!
     @IBOutlet weak var listPicker: UIPickerView!
+    var lists:[List] = []
+    var editingTask: Task? {
+        didSet {
+            if !self.isViewLoaded {
+                return
+            }
+            initFields()
+        }
+    }
     
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        newListSwitch.transform = CGAffineTransform(scaleX: 0.75, y: 0.75)
-        listPicker.dataSource = self
-        listPicker.delegate = self
-        newListField.isHidden = true
-        newListSwitch.isOn = false
+        self.newListSwitch.transform = CGAffineTransform(scaleX: 0.75, y: 0.75)
+        self.listPicker.dataSource = self
+        self.listPicker.delegate = self
+        self.newListField.isHidden = true
+        self.newListSwitch.isOn = false
+        self.initFields()
     }
     
     func numberOfComponents(in pickerView: UIPickerView) -> Int {
@@ -29,15 +39,28 @@ class EditViewController: UIViewController, UIPickerViewDataSource, UIPickerView
     }
     
     func pickerView(_ pickerView: UIPickerView, numberOfRowsInComponent component: Int) -> Int {
-        return List.lists.count
+        return self.lists.count
     }
+    
     @IBAction func switchToNewList(_ sender: Any) {
-        listPicker.isHidden = newListSwitch.isOn
-        newListField.isHidden = !listPicker.isHidden
+        self.listPicker.isHidden = self.newListSwitch.isOn
+        self.newListField.isHidden = !self.listPicker.isHidden
     }
     
     func pickerView(_ pickerView: UIPickerView, titleForRow row: Int, forComponent component: Int) -> String? {
-        return List.lists[row].title
+        return self.lists[row].title
+    }
+    
+    func initFields() {
+        if let task = self.editingTask, task.title != self.nameField.text  {
+            self.nameField.text = task.title
+            let listIndex = self.lists.firstIndex { $0.uuid == task.listUuid } ?? 0
+            self.listPicker.selectRow(listIndex, inComponent: 0, animated: false)
+        }
+        else if editingTask == nil {
+            self.nameField.text = ""
+            self.listPicker.selectRow(0, inComponent: 0, animated: false)
+        }
     }
     
 }

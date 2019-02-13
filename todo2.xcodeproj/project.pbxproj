@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		1E2AE0102209DCBE00170D1A /* ListTableViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E2AE00F2209DCBE00170D1A /* ListTableViewModel.swift */; };
 		1E5595692205DEB500A25CC1 /* SettingsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E5595682205DEB500A25CC1 /* SettingsViewController.swift */; };
 		1E78F8282204A13A00D7F318 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E78F8272204A13A00D7F318 /* AppDelegate.swift */; };
 		1E78F82D2204A13A00D7F318 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 1E78F82B2204A13A00D7F318 /* Main.storyboard */; };
@@ -21,6 +22,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		1E2AE00F2209DCBE00170D1A /* ListTableViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ListTableViewModel.swift; sourceTree = "<group>"; };
 		1E5595682205DEB500A25CC1 /* SettingsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsViewController.swift; sourceTree = "<group>"; };
 		1E78F8242204A13A00D7F318 /* todo2.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = todo2.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		1E78F8272204A13A00D7F318 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
@@ -70,6 +72,7 @@
 				1E78F83C2204A33100D7F318 /* Models */,
 				1E78F8272204A13A00D7F318 /* AppDelegate.swift */,
 				1E78F8412204A58800D7F318 /* ListTableViewController.swift */,
+				1E2AE00F2209DCBE00170D1A /* ListTableViewModel.swift */,
 				1E78F84A2204B10C00D7F318 /* EditViewController.swift */,
 				1E78F82B2204A13A00D7F318 /* Main.storyboard */,
 				1E5595682205DEB500A25CC1 /* SettingsViewController.swift */,
@@ -173,6 +176,7 @@
 				1E78F8422204A58800D7F318 /* ListTableViewController.swift in Sources */,
 				1E78F84B2204B10C00D7F318 /* EditViewController.swift in Sources */,
 				1E78F83E2204A34800D7F318 /* List.swift in Sources */,
+				1E2AE0102209DCBE00170D1A /* ListTableViewModel.swift in Sources */,
 				1E78F8402204A34F00D7F318 /* Task.swift in Sources */,
 				1E78F8282204A13A00D7F318 /* AppDelegate.swift in Sources */,
 				1E78F8482204A7AA00D7F318 /* ToDoTableViewCell.swift in Sources */,

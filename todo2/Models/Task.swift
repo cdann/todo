@@ -9,11 +9,14 @@
 import Foundation
 
 class Task {
-    var title:String
-    var done:Bool = false
+    let uuid: String = UUID().uuidString
+    var listUuid: String
+    var title: String
+    var done: Bool = false
     
-    init(title:String, done:Bool = false) {
+    init(title: String, done: Bool = false, listUuid: String) {
         self.title = title
         self.done = done
+        self.listUuid = listUuid
     }
 }

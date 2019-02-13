@@ -14,6 +14,7 @@ class ToDoTableViewCell: UITableViewCell {
     @IBOutlet weak var containerView: UIImageView!
     @IBOutlet weak var checkDoneButton: UIButton!
     var onSwitchDone:(() -> ())?
+    var onTaskEdit:(() -> ())?
     var task:Task? {
         didSet {
             guard let task = self.task else {
@@ -24,7 +25,6 @@ class ToDoTableViewCell: UITableViewCell {
         }
     }
     
-    //@IBAction func doSwitchDone(_sender: Any) {
     @IBAction func doCheckDone(_sender: Any) {
         guard let task = self.task else {
             return
@@ -32,6 +32,10 @@ class ToDoTableViewCell: UITableViewCell {
         task.done = !task.done
         styleIfDone()
         self.onSwitchDone?()
+    }
+    
+    @IBAction func taskEdit(_sender:Any) {
+        self.onTaskEdit?()
     }
     
     override func draw(_ rect: CGRect) {
